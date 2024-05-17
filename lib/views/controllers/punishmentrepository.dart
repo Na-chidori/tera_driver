@@ -7,7 +7,7 @@ class PunishmentRepository {
 
   PunishmentRepository({Dio? dio}) : _dio = dio ?? Dio();
 
-  final _baseUrl = "http://192.168.43.161:5000";
+  final _baseUrl = "http://192.168.18.161:5000";
 
   Future<List<Punishment>> getPunishments(String userId) async {
     List<Punishment> punishments = [];

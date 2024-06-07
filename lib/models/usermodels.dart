@@ -1,5 +1,3 @@
-//usermodels.dart
-
 import 'dart:convert';
 
 List<UserModels> userModelsFromJson(String str) =>
@@ -9,7 +7,7 @@ String userModelsToJson(List<UserModels> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class UserModels {
-  int id;
+  String id; // Change type from int to String
   String name;
   String email;
   String phone;
@@ -18,26 +16,21 @@ class UserModels {
   String licensenumber;
   String Assignedroute;
   String cityDistrict;
-  String assignedEmployeeFullName;
-  String assignedEmployeeId;
 
-  UserModels(
-      {required this.id,
-      required this.name,
-      required this.email,
-      required this.phone,
-      required this.code,
-      required this.licenseplate,
-      required this.licensenumber,
-      required this.Assignedroute,
-      required this.cityDistrict,
-      required this.assignedEmployeeFullName,
-      required this.assignedEmployeeId});
-// `toJson` converts a UserModels object to a JSON representation.
-// `fromJson` creates a UserModels object from a JSON map.
+  UserModels({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.code,
+    required this.licenseplate,
+    required this.licensenumber,
+    required this.Assignedroute,
+    required this.cityDistrict,
+  });
 
   factory UserModels.fromJson(Map<String, dynamic> json) => UserModels(
-        id: int.tryParse(json["_id"]?.split('').last) ?? 0,
+        id: json["_id"] ?? '', // Parse _id as string
         name: '${json['firstName']} ${json['lastName']}',
         email: json['email'],
         phone: json['phone'],
@@ -46,12 +39,10 @@ class UserModels {
         licensenumber: json['licensenumber'],
         Assignedroute: json['Assignedroute'],
         cityDistrict: json['cityDistrict'],
-        assignedEmployeeFullName: json['AssignedTransportEmployee']['fullName'],
-        assignedEmployeeId: json['AssignedTransportEmployee']['employeeId'],
       );
 
   Map<String, dynamic> toJson() => {
-        "id": id,
+        "_id": id, // Use _id to match MongoDB document field
         "name": name,
         "email": email,
         "phone": phone,
@@ -60,7 +51,5 @@ class UserModels {
         "licensenumber": licensenumber,
         "Assignedroute": Assignedroute,
         "cityDistrict": cityDistrict,
-        "assignedEmployeeFullName": assignedEmployeeFullName,
-        "assignedEmployeeId": assignedEmployeeId
       };
 }

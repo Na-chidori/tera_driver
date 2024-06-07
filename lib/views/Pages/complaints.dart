@@ -1,185 +1,358 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:http/http.dart' as http;
-import 'package:tera_driver/views/controllers/config.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:tera_driver/views/controllers/config.dart';
+import 'package:intl/intl.dart';
 
 class Complaints extends StatefulWidget {
-  final token;
-  const Complaints({@required this.token, Key? key}) : super(key: key);
+  final String token;
+  const Complaints({required this.token, Key? key}) : super(key: key);
 
   @override
   State<Complaints> createState() => _ComplaintsState();
 }
 
 class _ComplaintsState extends State<Complaints> {
+  List<Map<String, dynamic>> sentComplaints = [];
   late String userId;
-  TextEditingController _ComplaintTitle = TextEditingController();
-  TextEditingController _ComplaintDesc = TextEditingController();
-  List? items;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
-
     userId = jwtDecodedToken['_id'];
-    getComplaint(userId);
+    getComplaints(userId);
   }
 
-  void addComplaint() async {
-    if (_ComplaintTitle.text.isNotEmpty && _ComplaintDesc.text.isNotEmpty) {
-      var regBody = {
-        "userId": userId,
-        "title": _ComplaintTitle.text,
-        "desc": _ComplaintDesc.text
-      };
+  void getComplaints(String userId) async {
+    var response = await http.get(
+      Uri.parse('$getcomplaint/$userId'),
+      headers: {"Content-Type": "application/json"},
+    );
 
-      var response = await http.post(Uri.parse(sendcomplaint),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(regBody));
-
-      var jsonResponse = jsonDecode(response.body);
-
-      print(jsonResponse['status']);
-
-      if (jsonResponse['status']) {
-        _ComplaintDesc.clear();
-        _ComplaintTitle.clear();
-        Navigator.pop(context);
-      } else {
-        print("SomeThing Went Wrong");
+    if (response.statusCode == 200) {
+      try {
+        var jsonResponse = jsonDecode(response.body);
+        print("Get Complaints Response: $jsonResponse");
+        if (jsonResponse['status']) {
+          setState(() {
+            sentComplaints =
+                List<Map<String, dynamic>>.from(jsonResponse['success']);
+          });
+        } else {
+          setState(() {
+            sentComplaints = [];
+          });
+          print("No complaints found");
+        }
+      } catch (e) {
+        print("Error decoding get complaints response: $e");
       }
+    } else {
+      print("Server returned status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
     }
   }
 
-  void getComplaint(userId) async {
-    var regBody = {"userId": userId};
-    var response = await http.post(Uri.parse(getcomplaint),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regBody));
-    var jsonResponse = jsonDecode(response.body);
-    items = jsonResponse['success'];
-    setState(() {});
-  }
+  void deleteComplaint(String id) async {
+    var response = await http.delete(
+      Uri.parse('$deletecomplaint/$id'),
+      headers: {"Content-Type": "application/json"},
+    );
 
-  void deleteComplaint(id) async {
-    var regBody = {"id": id};
-    var response = await http.post(Uri.parse(deletecomplaint),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regBody));
-    var jsonResponse = jsonDecode(response.body);
-    if (jsonResponse['status']) {
-      getComplaint(userId);
+    if (response.statusCode == 200) {
+      try {
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status']) {
+          getComplaints(userId); // Refresh the complaints list
+        }
+      } catch (e) {
+        print("Error decoding delete complaint response: $e");
+      }
+    } else {
+      print("Server returned status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: "Complaints".text.make(),
-      ),
-      backgroundColor: Colors.lightBlueAccent,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20))),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: items == null
-                    ? null
-                    : ListView.builder(
-                        itemCount: items!.length,
-                        itemBuilder: (context, int index) {
-                          return Slidable(
-                            key: const ValueKey(0),
-                            endActionPane: ActionPane(
-                              motion: const ScrollMotion(),
-                              dismissible: DismissiblePane(onDismissed: () {}),
-                              children: [
-                                SlidableAction(
-                                  backgroundColor: Color(0xFFFE4A49),
-                                  foregroundColor: Colors.white,
-                                  icon: Icons.delete,
-                                  label: 'Delete',
-                                  onPressed: (BuildContext context) {
-                                    print('${items![index]['_id']}');
-                                    deleteComplaint('${items![index]['_id']}');
-                                  },
-                                ),
-                              ],
-                            ),
-                            child: Card(
-                              borderOnForeground: false,
-                              child: ListTile(
-                                leading: Icon(Icons.task),
-                                title: Text('${items![index]['title']}'),
-                                subtitle: Text('${items![index]['desc']}'),
-                                trailing: Icon(Icons.arrow_back),
-                              ),
-                            ),
-                          );
-                        }),
-              ),
-            ),
-          )
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _displayTextInputDialog(context),
-        child: Icon(Icons.add),
-        tooltip: 'Send Complaint',
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Complaints"),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "Send Complaint"),
+              Tab(text: "View Replies"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            SendComplaintTab(
+                userId: userId,
+                token: widget.token,
+                onComplaintAdded: () => getComplaints(userId)),
+            ViewRepliesTab(
+                items: sentComplaints
+                    .where((complaint) => complaint['reply'] != null)
+                    .toList(),
+                onDelete: (id) => deleteComplaint(id)),
+          ],
+        ),
       ),
     );
   }
+}
+// Import the intl package for date formatting
 
-  Future<void> _displayTextInputDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-              title: Text('Send Complaint'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _ComplaintTitle,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: "Title",
-                        border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)))),
-                  ).p4().px8(),
-                  TextField(
-                    controller: _ComplaintDesc,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: "Description",
-                        border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)))),
-                  ).p4().px8(),
-                  ElevatedButton(
-                      onPressed: () {
-                        addComplaint();
+class SendComplaintTab extends StatefulWidget {
+  final String userId;
+  final VoidCallback onComplaintAdded;
+  final String token;
+
+  const SendComplaintTab(
+      {required this.userId,
+      required this.token,
+      required this.onComplaintAdded,
+      Key? key})
+      : super(key: key);
+
+  @override
+  _SendComplaintTabState createState() => _SendComplaintTabState();
+}
+
+class _SendComplaintTabState extends State<SendComplaintTab> {
+  TextEditingController _ComplaintTitle = TextEditingController();
+  TextEditingController _ComplaintDesc = TextEditingController();
+  List<Map<String, dynamic>> sentComplaints = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSentComplaints();
+  }
+
+  void fetchSentComplaints() async {
+    var response = await http.get(
+      Uri.parse('$getcomplaint/${widget.userId}'),
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      try {
+        var jsonResponse = jsonDecode(response.body);
+        print("Get Sent Complaints Response: $jsonResponse");
+        if (jsonResponse['status']) {
+          setState(() {
+            sentComplaints =
+                List<Map<String, dynamic>>.from(jsonResponse['success']);
+          });
+        } else {
+          print("No complaints found");
+        }
+      } catch (e) {
+        print("Error decoding get sent complaints response: $e");
+      }
+    } else {
+      print("Server returned status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+    }
+  }
+
+  void addComplaint() async {
+    if (_ComplaintTitle.text.isNotEmpty && _ComplaintDesc.text.isNotEmpty) {
+      var regBody = {
+        "userId": widget.userId,
+        "Subject": _ComplaintTitle.text,
+        "description": _ComplaintDesc.text
+      };
+
+      var response = await http.post(
+        Uri.parse(sendcomplaint),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}"
+        },
+        body: jsonEncode(regBody),
+      );
+
+      if (response.statusCode == 200) {
+        try {
+          var jsonResponse = jsonDecode(response.body);
+          print("Add Complaint Response: $jsonResponse");
+          if (jsonResponse['status']) {
+            _ComplaintDesc.clear();
+            _ComplaintTitle.clear();
+            widget.onComplaintAdded();
+            fetchSentComplaints();
+          } else {
+            print("Add Complaint Error: Something went wrong");
+          }
+        } catch (e) {
+          print("Error decoding add complaint response: $e");
+        }
+      } else {
+        print("Server returned status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
+      }
+    }
+  }
+
+  void deleteComplaint(String id) async {
+    var response = await http.delete(
+      Uri.parse('$deletecomplaint/$id'),
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      try {
+        var jsonResponse = jsonDecode(response.body);
+        print("Delete Complaint Response: $jsonResponse");
+        if (jsonResponse['status']) {
+          setState(() {
+            sentComplaints.removeWhere((complaint) => complaint['_id'] == id);
+          });
+        } else {
+          print("Delete Complaint Error: Something went wrong");
+        }
+      } catch (e) {
+        print("Error decoding delete complaint response: $e");
+      }
+    } else {
+      print("Server returned status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          TextField(
+            controller: _ComplaintTitle,
+            decoration: InputDecoration(labelText: "Subject"),
+          ),
+          SizedBox(height: 10),
+          TextField(
+            controller: _ComplaintDesc,
+            decoration: InputDecoration(labelText: "Description"),
+          ),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: addComplaint,
+            child: Text("Send"),
+          ),
+          SizedBox(height: 20),
+          Expanded(
+            child: sentComplaints.isEmpty
+                ? Center(child: Text("No complaints sent yet"))
+                : ListView.builder(
+                    itemCount: sentComplaints.length,
+                    itemBuilder: (context, index) {
+                      final complaint = sentComplaints[index];
+                      final formattedDate = DateFormat('yyyy-MM-dd')
+                          .format(DateTime.parse(complaint['createdAt']));
+                      return Slidable(
+                        key: ValueKey(complaint['_id']),
+                        endActionPane: ActionPane(
+                          motion: const ScrollMotion(),
+                          children: [
+                            SlidableAction(
+                              backgroundColor: Color(0xFFFE4A49),
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                              label: 'Delete',
+                              onPressed: (BuildContext context) {
+                                deleteComplaint(complaint['_id']);
+                              },
+                            ),
+                          ],
+                        ),
+                        child: Card(
+                          child: ListTile(
+                            title: Text(complaint['subject']),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(complaint['description']),
+                                SizedBox(height: 10),
+                                Text("Sent on: $formattedDate",
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ViewRepliesTab extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
+  final Function(String) onDelete;
+
+  const ViewRepliesTab({required this.items, required this.onDelete, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final repliedComplaints =
+        items.where((complaint) => complaint['reply'] != null).toList();
+
+    return repliedComplaints.isEmpty
+        ? Center(child: Text("No complaints found"))
+        : ListView.builder(
+            itemCount: repliedComplaints.length,
+            itemBuilder: (context, index) {
+              var complaint = repliedComplaints[index];
+              var reply = complaint['reply'];
+              return Slidable(
+                key: ValueKey(complaint['_id']),
+                endActionPane: ActionPane(
+                  motion: const ScrollMotion(),
+                  children: [
+                    SlidableAction(
+                      backgroundColor: Color(0xFFFE4A49),
+                      foregroundColor: Colors.white,
+                      icon: Icons.delete,
+                      label: 'Delete',
+                      onPressed: (BuildContext context) {
+                        onDelete(complaint['_id']);
                       },
-                      child: Text("Send Complaint"))
-                ],
-              ));
-        });
+                    ),
+                  ],
+                ),
+                child: Card(
+                  child: ListTile(
+                    title: Text(complaint['subject']),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(complaint['description']),
+                        if (reply != null) ...[
+                          SizedBox(height: 10),
+                          Text("Reply: $reply",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                        ]
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
   }
 }

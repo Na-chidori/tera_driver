@@ -4,7 +4,6 @@ import 'package:tera_driver/views/controllers/punishmentrepository.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 part 'punishment_event.dart';
 part 'punishment_state.dart';
 
@@ -26,18 +25,30 @@ class PunishmentBloc extends Bloc<PunishmentEvent, PunishmentState> {
     GetPunishments event,
     Emitter<PunishmentState> emit,
   ) async {
+    emit(state.copyWith(status: PunishmentStatus.loading));
     try {
-      emit(state.copyWith(status: PunishmentStatus.loading));
       final punishments =
-          await _punishmentRepository.getPunishments(event.userId);
-      emit(state.copyWith(
-        status: PunishmentStatus.loaded,
-        punishments: punishments,
-      ));
-    } catch (e) {
-      var errorMessage = getError(e);
+          await _punishmentRepository.fetchPunishments(event.userId);
+      emit(
+        state.copyWith(
+          status: PunishmentStatus.loaded,
+          punishments: punishments,
+        ),
+      );
+    } on DioError catch (e) {
+      String errorMessage = e.response?.data['message'] ??
+          'Failed to fetch punishments. Please try again later.';
+      print('DioError: $errorMessage');
       emit(state.copyWith(
           status: PunishmentStatus.error, errorMessage: errorMessage));
+    } catch (e) {
+      print('Unknown error: $e'); // Log the exact error message
+      emit(
+        state.copyWith(
+          status: PunishmentStatus.error,
+          errorMessage: 'Failed to fetch punishments. Please try again later.',
+        ),
+      );
     }
   }
 
@@ -47,23 +58,31 @@ class PunishmentBloc extends Bloc<PunishmentEvent, PunishmentState> {
   ) async {
     try {
       emit(state.copyWith(paymentStatus: PaymentStatus.loading));
-      final paymentUrl = await _punishmentRepository.payPunishment(
+      final paymentUrl = await _punishmentRepository.payForPunishment(
           punishmentId: event.punishmentId);
       emit(state.copyWith(
         paymentStatus: PaymentStatus.loaded,
         paymentUrl: paymentUrl,
       ));
-    } catch (e) {
-      var errorMessage = getError(e);
+    } on DioError catch (e) {
+      String errorMessage = e.response?.data['message'] ??
+          'Failed to process payment. Please try again later.';
       emit(state.copyWith(
           paymentStatus: PaymentStatus.error, errorMessage: errorMessage));
+    } catch (e) {
+      emit(
+        state.copyWith(
+          paymentStatus: PaymentStatus.error,
+          errorMessage: 'Failed to process payment. Please try again later.',
+        ),
+      );
     }
   }
 
   void _onPaymentSuccessful(
     PaymentSuccessful event,
     Emitter<PunishmentState> emit,
-  ) {
+  ) async {
     emit(state.copyWith(paymentStatus: PaymentStatus.success));
   }
 }

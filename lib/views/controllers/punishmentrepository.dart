@@ -7,9 +7,9 @@ class PunishmentRepository {
 
   PunishmentRepository({Dio? dio}) : _dio = dio ?? Dio();
 
-  final _baseUrl = "http://192.168.18.161:5000";
+  final _baseUrl = "http://192.168.43.161:5000";
 
-  Future<List<Punishment>> getPunishments(String userId) async {
+  Future<List<Punishment>> fetchPunishments(String userId) async {
     List<Punishment> punishments = [];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -23,14 +23,26 @@ class PunishmentRepository {
       ),
     );
 
-    response.data['punishments'].forEach((json) {
-      punishments.add(Punishment.fromJson(json));
-    });
+    print('Response data: ${response.data}'); // Log the entire response data
+
+    if (response.data['punishments'] is List) {
+      List<dynamic> punishmentList = response.data['punishments'];
+      for (var json in punishmentList) {
+        print('Punishment JSON: $json'); // Log each punishment JSON object
+        if (json is Map<String, dynamic>) {
+          punishments.add(Punishment.fromJson(json));
+        } else {
+          throw FormatException("Invalid punishment data format");
+        }
+      }
+    } else {
+      throw FormatException("Invalid response format");
+    }
 
     return punishments;
   }
 
-  Future<String> payPunishment({
+  Future<String> payForPunishment({
     required String punishmentId,
   }) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

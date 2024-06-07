@@ -4,27 +4,27 @@ import 'package:tera_driver/widgets/punishment_card_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:tera_driver/views/Pages/payments_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class PunishmentsPage extends StatefulWidget {
-  const PunishmentsPage({super.key});
-
+  final String token;
+  const PunishmentsPage({required this.token, Key? key}) : super(key: key);
   @override
   _PunishmentsPageState createState() => _PunishmentsPageState();
 }
 
 class _PunishmentsPageState extends State<PunishmentsPage> {
+  late String userId;
   @override
   void initState() {
     super.initState();
-    fetchPunishments(context);
+    Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
+    userId = jwtDecodedToken['_id'];
+    fetchPunishments(userId);
   }
 
-  Future<void> fetchPunishments(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-
-    if (userId != null) {
+  Future<void> fetchPunishments(String userId) async {
+    if (userId.isNotEmpty) {
       context.read<PunishmentBloc>().add(GetPunishments(userId: userId));
     } else {
       print("User ID not found!");

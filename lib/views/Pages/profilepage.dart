@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:tera_driver/models/usermodels.dart';
+import 'package:tera_driver/views/Pages/ChangePasswordPage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:tera_driver/views/controllers/config.dart';
+import 'package:tera_driver/views/Pages/EditProfilePage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
   final String token;
@@ -16,13 +20,44 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late Future<UserModels> _futureUser;
   late String userId;
-
+  File? _image;
   @override
   void initState() {
     super.initState();
     Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
     userId = jwtDecodedToken['_id'];
     _futureUser = fetchUserDetails(userId);
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _uploadProfilePicture(_image!);
+    }
+  }
+
+  Future<void> _uploadProfilePicture(File image) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('your_api_endpoint/uploadProfilePicture'),
+    );
+    request.files.add(await http.MultipartFile.fromPath('picture', image.path));
+    request.fields['userId'] = userId;
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      setState(() {
+        _futureUser = fetchUserDetails(userId); // Refresh user data
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload profile picture.')),
+      );
+    }
   }
 
   Future<UserModels> fetchUserDetails(String userId) async {
@@ -70,14 +105,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     // Profile picture
                     GestureDetector(
-                      onTap: () {
-                        // Open image picker to change profile picture
-                      },
+                      onTap: _pickImage,
                       child: CircleAvatar(
                         radius: 50,
                         // Replace with actual profile picture URL
-                        backgroundImage:
-                            AssetImage('assets/uploads/1664982164878.jpg'),
+                        backgroundImage: _image != null
+                            ? FileImage(_image!) as ImageProvider<Object>
+                            : AssetImage('assets/uploads/1664982164878.jpg')
+                                as ImageProvider<Object>,
                       ),
                     ),
 
@@ -96,12 +131,31 @@ class _ProfilePageState extends State<ProfilePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final updatedUser = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    EditProfilePage(user: user),
+                              ),
+                            );
+                            if (updatedUser != null) {
+                              setState(() {
+                                _futureUser = Future.value(updatedUser);
+                              });
+                            }
+                          },
                           child: const Text('Edit Profile'),
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // Navigate to change password page
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChangePasswordPage(userId: userId),
+                              ),
+                            );
                           },
                           child: const Text('Change Password'),
                         ),
@@ -150,14 +204,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         ListTile(
                           title: const Text('City District'),
                           subtitle: Text(user.cityDistrict),
-                        ),
-                        ListTile(
-                          title: const Text('assigned Employee Full Name'),
-                          subtitle: Text(user.assignedEmployeeFullName),
-                        ),
-                        ListTile(
-                          title: const Text('assigned Employee Id'),
-                          subtitle: Text(user.assignedEmployeeId),
                         ),
                       ],
                     ),

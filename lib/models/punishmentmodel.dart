@@ -12,10 +12,11 @@ class Punishment extends Equatable {
 
   //
   factory Punishment.fromJson(Map<String, dynamic> json) {
+    print('Parsing punishment JSON: $json');
     return Punishment(
       id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
+      name: json['punishmentType'] ?? '',
+      price: (json['fine'] ?? 0).toDouble(),
     );
   }
 

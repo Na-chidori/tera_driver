@@ -12,9 +12,6 @@ class GetPunishments extends PunishmentEvent {
   final String userId;
 
   const GetPunishments({required this.userId});
-
-  @override
-  List<Object> get props => [userId];
 }
 
 // buy selected product

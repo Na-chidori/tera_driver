@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
-      drawer: Nav_bar(token: widget.token),
+      drawer: NavBar(token: widget.token),
       body: FutureBuilder<UserModels>(
         future: _futureUser,
         builder: (context, snapshot) {
@@ -200,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       colors: [
                                         Colors.white,
                                         const Color.fromARGB(
-                                            255, 171, 205, 234)!,
+                                            255, 171, 205, 234),
                                       ],
                                     ),
                                   ),
@@ -246,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Attendance(),
+            builder: (context) => Attendance(token: widget.token),
           ),
         );
         break;
@@ -278,7 +278,9 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PunishmentsPage(),
+            builder: (context) => PunishmentsPage(
+              token: widget.token,
+            ),
           ),
         );
         break;

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:intl/intl.dart';
+import 'package:web_socket_channel/web_socket_channel.dart'; // Added for WebSocket integration
 import 'package:tera_driver/views/controllers/config.dart';
 
 class Attendance extends StatefulWidget {
@@ -17,22 +18,43 @@ class _AttendanceState extends State<Attendance> {
   late String driverId;
   List<dynamic> attendanceData = [];
   bool isLoading = true;
+  late WebSocketChannel channel; // WebSocket channel
 
   @override
   void initState() {
     super.initState();
-    fetchAttendanceData();
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.token);
+    driverId = decodedToken['_id'];
+    fetchAttendanceData(driverId);
+
+    // Initialize WebSocket connection
+    channel = WebSocketChannel.connect(
+      Uri.parse(
+          'ws://192.168.97.161:5000'), // Replace with your WebSocket server address
+    );
+
+    // Listen for updates from the WebSocket server
+    channel.stream.listen((data) {
+      final newAttendanceData = json.decode(data);
+      setState(() {
+        attendanceData = newAttendanceData;
+      });
+    });
   }
 
-  Future<void> fetchAttendanceData() async {
+  @override
+  void dispose() {
+    // Close the WebSocket connection when the widget is disposed
+    channel.sink.close();
+    super.dispose();
+  }
+
+  Future<void> fetchAttendanceData(String driverId) async {
     try {
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.token);
-      driverId = decodedToken['driverId'] ?? '';
       final response = await http.get(
         Uri.parse('$driverAttendance/$driverId'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
       );
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         setState(() {
           attendanceData = json.decode(response.body);
@@ -41,10 +63,16 @@ class _AttendanceState extends State<Attendance> {
       } else {
         // Handle the error
         print('Failed to load attendance data');
+        setState(() {
+          isLoading = false;
+        });
       }
     } catch (e) {
       // Handle exceptions
       print('Exception occurred while fetching attendance data: $e');
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -88,8 +116,8 @@ class _AttendanceState extends State<Attendance> {
                                 crossAxisSpacing: 8.0,
                               ),
                               itemCount: rounds.length,
-                              itemBuilder: (context, index) {
-                                final round = rounds[index];
+                              itemBuilder: (context, roundIndex) {
+                                final round = rounds[roundIndex];
                                 return Container(
                                   width: 40,
                                   height: 40,

@@ -14,8 +14,10 @@ class UserModels {
   String code;
   String licenseplate;
   String licensenumber;
-  String Assignedroute;
+  String? Address;
   String cityDistrict;
+  String? Terminal;
+  String Assignedroute;
 
   UserModels({
     required this.id,
@@ -25,8 +27,10 @@ class UserModels {
     required this.code,
     required this.licenseplate,
     required this.licensenumber,
-    required this.Assignedroute,
+    this.Address,
     required this.cityDistrict,
+    this.Terminal,
+    required this.Assignedroute,
   });
 
   factory UserModels.fromJson(Map<String, dynamic> json) => UserModels(
@@ -37,8 +41,10 @@ class UserModels {
         code: json['code'],
         licenseplate: json['licenseplate'],
         licensenumber: json['licensenumber'],
-        Assignedroute: json['Assignedroute'],
+        Address: json['Address'],
         cityDistrict: json['cityDistrict'],
+        Terminal: json['Terminal'],
+        Assignedroute: json['Assignedroute'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -49,7 +55,9 @@ class UserModels {
         "code": code,
         "licenseplate": licenseplate,
         "licensenumber": licensenumber,
-        "Assignedroute": Assignedroute,
+        "Address": Address,
         "cityDistrict": cityDistrict,
+        "Terminal": Terminal,
+        "Assignedroute": Assignedroute,
       };
 }

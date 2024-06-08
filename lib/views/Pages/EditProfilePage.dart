@@ -36,10 +36,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         code: widget.user.code,
         licenseplate: widget.user.licenseplate,
         licensenumber: widget.user.licensenumber,
-        Assignedroute: widget.user.Assignedroute,
+        Address: widget.user.Address,
         cityDistrict: widget.user.cityDistrict,
-        assignedEmployeeFullName: widget.user.assignedEmployeeFullName,
-        assignedEmployeeId: widget.user.assignedEmployeeId,
+        Terminal: widget.user.Terminal,
+        Assignedroute: widget.user.Assignedroute,
       );
 
       final response = await http.put(

@@ -1,32 +1,24 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tera_driver/models/punishmentmodel.dart';
+import 'package:http/http.dart' as http;
 
 class PunishmentRepository {
-  final Dio _dio;
-
-  PunishmentRepository({Dio? dio}) : _dio = dio ?? Dio();
-
-  final _baseUrl = "http://192.168.43.161:5000";
+  final _baseUrl = "http://192.168.0.39:5000";
 
   Future<List<Punishment>> fetchPunishments(String userId) async {
     List<Punishment> punishments = [];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
 
-    var response = await _dio.get(
-      '$_baseUrl/mobileApp/api/punishment/punishments/$userId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
+    var response = await http.get(
+        Uri.parse('$_baseUrl/mobileApp/api/punishment/punishments/$userId'));
 
-    print('Response data: ${response.data}'); // Log the entire response data
+    print('Response data: ${response.body}'); // Log the entire response data
 
-    if (response.data['punishments'] is List) {
-      List<dynamic> punishmentList = response.data['punishments'];
+    var body = jsonDecode(response.body);
+    if (body['punishments'] is List) {
+      List<dynamic> punishmentList = body['punishments'];
       for (var json in punishmentList) {
         print('Punishment JSON: $json'); // Log each punishment JSON object
         if (json is Map<String, dynamic>) {
@@ -45,19 +37,18 @@ class PunishmentRepository {
   Future<String> payForPunishment({
     required String punishmentId,
   }) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    final response = await _dio.post(
-      '$_baseUrl/api/driver/payment/punishment',
-      data: {'punishmentId': punishmentId},
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+    final response = await http.post(
+      Uri.parse(
+        '$_baseUrl/api/driver/payment/punishment',
       ),
+      body: {'punishmentId': punishmentId},
     );
+    debugPrint('Punishment ID: $punishmentId');
+    var body = jsonDecode(response.body);
+    print('Response data: ${response.body}');
 
-    return response.data['paymentUrl'];
+    debugPrint('Payment URL: ${body['paymentUrl']}');
+
+    return body['paymentUrl'];
   }
 }

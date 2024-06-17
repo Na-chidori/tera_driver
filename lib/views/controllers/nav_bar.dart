@@ -21,6 +21,7 @@ class NavBar extends StatefulWidget {
 class _NavBarState extends State<NavBar> {
   late Future<UserModels> _futureUser;
   late String userId;
+  int notificationCount = 0;
 
   @override
   void initState() {
@@ -118,25 +119,33 @@ class _NavBarState extends State<NavBar> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => NotificationPage(),
-                    ),
-                  ),
-                  trailing: ClipOval(
-                    child: Container(
-                      color: Colors.red,
-                      width: 20,
-                      height: 20,
-                      child: Center(
-                        child: Text(
-                          '8',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
+                      builder: (context) => NotificationPage(
+                        onNotificationCountChanged: (count) {
+                          setState(() {
+                            notificationCount = count;
+                          });
+                        },
                       ),
                     ),
                   ),
+                  trailing: notificationCount > 0
+                      ? ClipOval(
+                          child: Container(
+                            color: Colors.red,
+                            width: 20,
+                            height: 20,
+                            child: Center(
+                              child: Text(
+                                '$notificationCount',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : null,
                 ),
                 Divider(),
                 ListTile(

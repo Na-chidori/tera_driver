@@ -82,6 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: FutureBuilder<UserModels>(
         future: _futureUser,
@@ -101,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Profile picture
                     GestureDetector(
@@ -128,7 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     // Edit profile and change password buttons
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
                           onPressed: () async {
@@ -165,47 +166,55 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 32.0),
 
                     // Profile details list view
-                    ListView(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        ListTile(
-                          title: const Text('Email'),
-                          subtitle: Text(user.email),
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      elevation: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              title: const Text('Email'),
+                              subtitle: Text(user.email),
+                            ),
+                            ListTile(
+                              title: const Text('Phone'),
+                              subtitle: Text(user.phone),
+                            ),
+                            ListTile(
+                              title: const Text('First Name'),
+                              subtitle: Text(user.name.split(' ')[0]),
+                            ),
+                            ListTile(
+                              title: const Text('Last Name'),
+                              subtitle: Text(user.name.split(' ')[1]),
+                            ),
+                            ListTile(
+                              title: const Text('Code'),
+                              subtitle: Text(user.code.toString()),
+                            ),
+                            ListTile(
+                              title: const Text('License Plate'),
+                              subtitle: Text(user.licenseplate),
+                            ),
+                            ListTile(
+                              title: const Text('License Number'),
+                              subtitle: Text(user.licensenumber),
+                            ),
+                            ListTile(
+                              title: const Text('Assigned Route'),
+                              subtitle: Text(user.Assignedroute),
+                            ),
+                            ListTile(
+                              title: const Text('City District'),
+                              subtitle: Text(user.cityDistrict),
+                            ),
+                          ],
                         ),
-                        ListTile(
-                          title: const Text('Phone'),
-                          subtitle: Text(user.phone),
-                        ),
-                        ListTile(
-                          title: const Text('First Name'),
-                          subtitle: Text(user.name.split(' ')[0]),
-                        ),
-                        ListTile(
-                          title: const Text('Last Name'),
-                          subtitle: Text(user.name.split(' ')[1]),
-                        ),
-                        ListTile(
-                          title: const Text('Code'),
-                          subtitle: Text(user.code.toString()),
-                        ),
-                        ListTile(
-                          title: const Text('License Plate'),
-                          subtitle: Text(user.licenseplate),
-                        ),
-                        ListTile(
-                          title: const Text('License Number'),
-                          subtitle: Text(user.licensenumber),
-                        ),
-                        ListTile(
-                          title: const Text('Assigned Route'),
-                          subtitle: Text(user.Assignedroute),
-                        ),
-                        ListTile(
-                          title: const Text('City District'),
-                          subtitle: Text(user.cityDistrict),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),

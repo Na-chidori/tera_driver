@@ -9,22 +9,30 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 class PunishmentsPage extends StatefulWidget {
   final String token;
   const PunishmentsPage({required this.token, Key? key}) : super(key: key);
+
   @override
   _PunishmentsPageState createState() => _PunishmentsPageState();
 }
 
 class _PunishmentsPageState extends State<PunishmentsPage> {
   late String userId;
+
   @override
   void initState() {
     super.initState();
-    Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
-    userId = jwtDecodedToken['_id'];
-    fetchPunishments(userId);
+    try {
+      Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(widget.token);
+      userId = jwtDecodedToken['_id'];
+      print('Decoded User ID: $userId'); // Debug print
+      fetchPunishments(userId);
+    } catch (e) {
+      print('Error decoding token: $e');
+    }
   }
 
   Future<void> fetchPunishments(String userId) async {
     if (userId.isNotEmpty) {
+      print('Fetching punishments for User ID: $userId'); // Debug print
       context.read<PunishmentBloc>().add(GetPunishments(userId: userId));
     } else {
       print("User ID not found!");
@@ -43,7 +51,7 @@ class _PunishmentsPageState extends State<PunishmentsPage> {
                 width: 80,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.blue,
                   borderRadius: BorderRadius.circular(200),
                 ),
                 child: const Column(
@@ -63,7 +71,7 @@ class _PunishmentsPageState extends State<PunishmentsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.blueAccent,
         title: const Text('Punishments'),
       ),
       body: MultiBlocListener(
@@ -92,6 +100,7 @@ class _PunishmentsPageState extends State<PunishmentsPage> {
                 ));
               }
               // show loading indicator
+              print('Payment Status: ${state.paymentStatus}');
               if (state.paymentStatus == PaymentStatus.loading) {
                 _showLoadingDialog(context);
               }
@@ -126,17 +135,15 @@ class _PunishmentsPageState extends State<PunishmentsPage> {
                 child: CircularProgressIndicator(),
               );
             }
-            // display the punishments in grid view
-            return GridView.builder(
-                itemCount: state.punishments.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 9 / 10,
-                ),
-                itemBuilder: (context, index) {
-                  final punishment = state.punishments[index];
-                  return PunishmentCard(punishment: punishment);
-                });
+            print('Punishments: ${state.punishments}'); // Debug print
+            return ListView.builder(
+              itemCount: state.punishments.length,
+              itemBuilder: (context, index) {
+                print('Index: $index'); // Debug print
+                final punishment = state.punishments[index];
+                return PunishmentCard(punishment: punishment);
+              },
+            );
           },
         ),
       ),

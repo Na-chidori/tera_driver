@@ -3,10 +3,10 @@ import 'package:equatable/equatable.dart';
 class Punishment extends Equatable {
   final String id;
   final String name;
-  final double price;
+  final double fine;
   const Punishment({
     required this.name,
-    required this.price,
+    required this.fine,
     required this.id,
   });
 
@@ -16,10 +16,10 @@ class Punishment extends Equatable {
     return Punishment(
       id: json['_id'] ?? '',
       name: json['punishmentType'] ?? '',
-      price: (json['fine'] ?? 0).toDouble(),
+      fine: (json['fine'] ?? 0).toDouble(),
     );
   }
 
   @override
-  List<Object> get props => [id, name, price];
+  List<Object> get props => [id, name, fine];
 }

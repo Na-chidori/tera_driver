@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tera_driver/models/punishmentmodel.dart';
 import 'package:tera_driver/views/controllers/punishmentrepository.dart';
 import 'package:dio/dio.dart';
@@ -12,9 +15,7 @@ class PunishmentBloc extends Bloc<PunishmentEvent, PunishmentState> {
 
   PunishmentBloc({
     PunishmentRepository? punishmentRepository,
-    Dio? dio,
-  })  : _punishmentRepository =
-            punishmentRepository ?? PunishmentRepository(dio: Dio()),
+  })  : _punishmentRepository = punishmentRepository ?? PunishmentRepository(),
         super(PunishmentState.initial()) {
     on<GetPunishments>(_onGetPunishments);
     on<PayPunishments>(_onPayPunishment);
@@ -25,30 +26,27 @@ class PunishmentBloc extends Bloc<PunishmentEvent, PunishmentState> {
     GetPunishments event,
     Emitter<PunishmentState> emit,
   ) async {
-    emit(state.copyWith(status: PunishmentStatus.loading));
     try {
-      final punishments =
-          await _punishmentRepository.fetchPunishments(event.userId);
+      emit(state.copyWith(status: PunishmentStatus.loading));
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+      Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(token!);
+      String userId = jwtDecodedToken['_id'];
+      debugPrint("userId bloc: $userId");
+      final punishments = await _punishmentRepository.fetchPunishments(userId);
       emit(
         state.copyWith(
           status: PunishmentStatus.loaded,
           punishments: punishments,
         ),
       );
-    } on DioError catch (e) {
-      String errorMessage = e.response?.data['message'] ??
+    } catch (e) {
+      debugPrint(e.toString());
+      String errorMessage = e.toString() ??
           'Failed to fetch punishments. Please try again later.';
       print('DioError: $errorMessage');
       emit(state.copyWith(
           status: PunishmentStatus.error, errorMessage: errorMessage));
-    } catch (e) {
-      print('Unknown error: $e'); // Log the exact error message
-      emit(
-        state.copyWith(
-          status: PunishmentStatus.error,
-          errorMessage: 'Failed to fetch punishments. Please try again later.',
-        ),
-      );
     }
   }
 
@@ -58,22 +56,20 @@ class PunishmentBloc extends Bloc<PunishmentEvent, PunishmentState> {
   ) async {
     try {
       emit(state.copyWith(paymentStatus: PaymentStatus.loading));
+      debugPrint('Punishment ID: ${event.punishmentId}');
       final paymentUrl = await _punishmentRepository.payForPunishment(
           punishmentId: event.punishmentId);
       emit(state.copyWith(
         paymentStatus: PaymentStatus.loaded,
         paymentUrl: paymentUrl,
       ));
-    } on DioError catch (e) {
-      String errorMessage = e.response?.data['message'] ??
-          'Failed to process payment. Please try again later.';
-      emit(state.copyWith(
-          paymentStatus: PaymentStatus.error, errorMessage: errorMessage));
     } catch (e) {
+      debugPrint('OnPayPunishment Error: $e');
+      var errorMessage = getError(e);
       emit(
         state.copyWith(
           paymentStatus: PaymentStatus.error,
-          errorMessage: 'Failed to process payment. Please try again later.',
+          errorMessage: errorMessage,
         ),
       );
     }

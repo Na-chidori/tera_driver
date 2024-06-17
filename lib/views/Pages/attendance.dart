@@ -30,7 +30,7 @@ class _AttendanceState extends State<Attendance> {
     // Initialize WebSocket connection
     channel = WebSocketChannel.connect(
       Uri.parse(
-          'ws://192.168.97.161:5000'), // Replace with your WebSocket server address
+          'ws://192.168.0.39:5000'), // Replace with your WebSocket server address
     );
 
     // Listen for updates from the WebSocket server
@@ -76,38 +76,52 @@ class _AttendanceState extends State<Attendance> {
     }
   }
 
+  String formatDate(String date) {
+    return DateFormat('yyyy-MM-dd').format(DateTime.parse(date));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Attendance'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : attendanceData.isEmpty
-              ? Center(child: Text('No attendance history yet'))
+              ? Center(
+                  child: Text(
+                    'No attendance history yet',
+                    style: TextStyle(fontSize: 18.0, color: Colors.grey),
+                  ),
+                )
               : ListView.builder(
+                  padding: EdgeInsets.all(8.0),
                   itemCount: attendanceData.length,
                   itemBuilder: (context, index) {
                     final attendance = attendanceData[index];
                     final rounds = attendance['rounds'] as List<dynamic>;
                     final overallStatus = attendance['overallStatus'];
                     final date = attendance['date'] != null
-                        ? DateFormat('yyyy-MM-dd')
-                            .format(DateTime.parse(attendance['date']))
+                        ? formatDate(attendance['date'])
                         : '';
 
                     return Card(
                       color: overallStatus == 'Completed'
                           ? Colors.lightGreen[100]
                           : Colors.red[100],
-                      margin: EdgeInsets.all(10.0),
+                      margin: EdgeInsets.symmetric(vertical: 8.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
                       child: Padding(
-                        padding: EdgeInsets.all(10.0),
+                        padding: EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             GridView.builder(
+                              physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
@@ -125,7 +139,8 @@ class _AttendanceState extends State<Attendance> {
                                   decoration: BoxDecoration(
                                     color: round['status'] == 'Complete'
                                         ? Colors.green
-                                        : Colors.red,
+                                        : const Color.fromARGB(
+                                            255, 255, 123, 0),
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Text(

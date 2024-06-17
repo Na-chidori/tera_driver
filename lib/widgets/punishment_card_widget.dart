@@ -13,48 +13,39 @@ class PunishmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 10),
-          Text(
-            punishment.name,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Text(
-                '${punishment.price.toStringAsFixed(2)} Br',
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(
+                Icons.payment,
+                color: Colors.green,
+                size: 40,
               ),
-              SizedBox(
-                height: 30,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
+              title: Text(
+                punishment.name,
+              ),
+              subtitle: Text(
+                '${punishment.fine.toStringAsFixed(2)} Br',
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                TextButton(
                   onPressed: () {
                     context.read<PunishmentBloc>().add(PayPunishments(
                           punishmentId: punishment.id,
                         ));
                   },
-                  child: const Text(
-                    'Pay',
-                  ),
+                  child: const Text('Pay'),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

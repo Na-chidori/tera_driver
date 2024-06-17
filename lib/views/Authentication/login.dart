@@ -14,9 +14,10 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  TextEditingController emailController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool _isNotValidate = false;
+  bool _obscurePassword = true;
   late SharedPreferences prefs;
 
   @override
@@ -30,9 +31,10 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   void loginUser() async {
-    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+    if (usernameController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty) {
       var reqBody = {
-        "email": emailController.text,
+        "username": usernameController.text,
         "password": passwordController.text
       };
 
@@ -62,79 +64,111 @@ class _SignInPageState extends State<SignInPage> {
         body: Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: [
-                  const Color.fromARGB(255, 163, 244, 230),
-                  const Color.fromARGB(255, 19, 249, 234)
-                ],
-                begin: FractionalOffset.topLeft,
-                end: FractionalOffset.bottomCenter,
-                stops: [0.0, 0.8],
-                tileMode: TileMode.mirror),
-          ),
+          color: Colors.lightBlueAccent,
           child: Center(
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  CommonLogo(),
-                  HeightBox(10),
-                  "Welcome Back".text.size(22).yellow100.make(),
-                  HeightBox(10),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: "Email",
-                        errorText: _isNotValidate ? "Enter Proper Info" : null,
-                        border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)))),
-                  ).p4().px24(),
-                  TextField(
-                    controller: passwordController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: "Password",
-                        errorText: _isNotValidate ? "Enter Proper Info" : null,
-                        border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)))),
-                  ).p4().px24(),
-                  GestureDetector(
-                    onTap: () {
-                      loginUser();
-                    },
-                    child: HStack([
-                      VxBox(child: "LogIn".text.white.makeCentered().p16())
-                          .green600
-                          .roundedLg
-                          .make(),
-                    ]),
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Card(
+                  color: Colors.white,
+                  elevation: 20.0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0),
                   ),
-                ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        CommonLogo().wh(150, 150),
+                        "The Solution ".text.size(30).blue400.bold.make(),
+                        "You Were".text.size(30).blue400.bold.make(),
+                        "Looking For!".text.size(30).blue400.bold.make(),
+                        SizedBox(height: 18),
+                        "Welcome!".text.size(22).blue600.make(),
+                        Image.asset(
+                          'assets/welcomepage/driver-app.png',
+                          width: 100,
+                          height: 100,
+                        ),
+                        HeightBox(10),
+                        TextField(
+                          controller: usernameController,
+                          keyboardType: TextInputType.text,
+                          decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.person),
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: "UserName",
+                              errorText:
+                                  _isNotValidate ? "Enter Proper Info" : null,
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0)))),
+                        ).p4().px24(),
+                        TextField(
+                          controller: passwordController,
+                          keyboardType: TextInputType.text,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.lock),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: "Password",
+                              errorText:
+                                  _isNotValidate ? "Enter Proper Info" : null,
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0)))),
+                        ).p4().px24(),
+                        HeightBox(20),
+                        GestureDetector(
+                          onTap: () {
+                            loginUser();
+                          },
+                          child: HStack([
+                            VxBox(
+                                    child:
+                                        "LogIn".text.white.makeCentered().p20())
+                                .blue600
+                                .roundedLg
+                                .width(150)
+                                .make(),
+                          ]),
+                        ),
+                        HeightBox(20),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Registration()));
+                          },
+                          child: HStack([
+                            "Create a new Account..".text.make(),
+                            "Sign Up".text.blue500.make()
+                          ]).centered(),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-        bottomNavigationBar: GestureDetector(
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => Registration()));
-          },
-          child: Container(
-              height: 25,
-              color: Colors.lightBlue,
-              child: Center(
-                  child: "Create a new Account..! Sign Up"
-                      .text
-                      .white
-                      .makeCentered())),
         ),
       ),
     );

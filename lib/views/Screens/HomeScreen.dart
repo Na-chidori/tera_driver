@@ -3,7 +3,6 @@ import 'package:tera_driver/views/Pages/attendance.dart';
 import 'package:tera_driver/views/Pages/complaints.dart';
 import 'package:tera_driver/views/Pages/notifications.dart';
 import 'package:tera_driver/views/Pages/punishment.dart';
-import 'package:tera_driver/views/Pages/routes.dart';
 import 'package:tera_driver/views/Pages/warnings.dart';
 import 'package:tera_driver/views/controllers/nav_bar.dart';
 import 'package:tera_driver/models/usermodels.dart';
@@ -11,10 +10,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:tera_driver/views/controllers/config.dart';
+import 'package:tera_driver/views/controllers/applogo.dart';
 
 class HomeScreen extends StatefulWidget {
   final token;
-  const HomeScreen({@required this.token, Key? key}) : super(key: key);
+  const HomeScreen({required this.token, Key? key}) : super(key: key);
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -22,6 +22,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<UserModels> _futureUser;
   late String userId;
+  int _selectedIndex = 0;
+  int notificationCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -30,8 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _futureUser = fetchUserDetails(userId);
   }
 
-  GlobalKey<ScaffoldState> _scaffoldKey =
-      GlobalKey<ScaffoldState>(); // Add this key
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   Future<UserModels> fetchUserDetails(String userId) async {
     try {
@@ -54,31 +56,28 @@ class _HomeScreenState extends State<HomeScreen> {
     'attendance',
     'warnings',
     'notifications',
-    'routes',
     'punishments',
     'complaints',
   ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    navigateToScreen(index);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-        leading: IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
-      ),
+      appBar: AppBar(),
       drawer: NavBar(token: widget.token),
       body: FutureBuilder<UserModels>(
         future: _futureUser,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           } else if (snapshot.hasError) {
@@ -87,152 +86,120 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           } else {
             final user = snapshot.data!;
-            return Stack(
-              children: [
-                Image.asset(
-                  'assets/homepage/background.jpg',
-                  fit: BoxFit.cover,
-                  height: double.infinity,
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                  child: ListView(
-                    children: [
-                      Container(
-                        child: Container(
-                          padding: EdgeInsets.only(
-                            top: 15,
-                            left: 15,
-                            right: 15,
-                            bottom: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(
-                                'assets/homepage/dashboard.jpg',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                            borderRadius: BorderRadius.circular(50),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 5,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
+            return Container(
+              child: Column(
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Color.fromARGB(255, 88, 164, 202),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Center(
                           child: Column(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/homepage/logoo.png',
-                                      width: 100,
-                                      height: 100,
-                                    ),
-                                    Text(
-                                      "Welcome" +
-                                          ' ' +
-                                          user.name.split(' ')[0] +
-                                          '!',
-                                      style: TextStyle(
-                                        fontSize: 25,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 1,
-                                        wordSpacing: 2,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2.0),
-                                    Text(
-                                      DateTime.now().hour.toString() +
-                                          ":" +
-                                          DateTime.now().minute.toString(),
-                                      style: const TextStyle(
-                                        color: Colors.blue,
-                                        fontSize: 18.0,
-                                      ),
-                                    ),
-                                  ],
+                              CommonLogo(),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                "SEMERIT",
+                                style: TextStyle(
+                                    fontSize: 40,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Welcome ${user.name.split(' ')[0]}!",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                  wordSpacing: 2,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 2.0),
+                              Text(
+                                "${DateTime.now().hour}:${DateTime.now().minute}",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20.0,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: GridView.builder(
-                          itemCount: imgList.length,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1.2,
-                            mainAxisSpacing: 20,
-                            crossAxisSpacing: 20,
-                          ),
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                navigateToScreen(index);
-                              },
-                              child: Card(
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.white,
-                                        const Color.fromARGB(
-                                            255, 171, 205, 234),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Image.asset(
-                                        'assets/homepage/${imgList[index]}.png',
-                                        width: 50,
-                                        height: 50,
-                                      ),
-                                      SizedBox(height: 10),
-                                      Text(
-                                        imgList[index].capitalize(),
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                        const Spacer(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: GridView.builder(
+                      itemCount: imgList.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1.2,
+                        mainAxisSpacing: 20,
+                        crossAxisSpacing: 20,
+                      ),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            navigateToScreen(index);
+                          },
+                          child: Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: Colors.white,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/homepage/${imgList[index]}.png',
+                                    width: 50,
+                                    height: 50,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    imgList[index].capitalize(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             );
           }
         },
@@ -262,19 +229,17 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NotificationPage(),
+            builder: (context) => NotificationPage(
+              onNotificationCountChanged: (count) {
+                setState(() {
+                  notificationCount = count;
+                });
+              },
+            ),
           ),
         );
         break;
       case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Routes(),
-          ),
-        );
-        break;
-      case 4:
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -284,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
         break;
-      case 5:
+      case 4:
         Navigator.push(
           context,
           MaterialPageRoute(

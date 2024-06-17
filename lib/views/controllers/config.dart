@@ -1,6 +1,6 @@
-final url = 'http://192.168.97.161:5000/api/driver/';
-final url1 = 'http://192.168.97.161:5000/api/notifications/';
-final url0 = 'http://192.168.97.161:5000';
+final url0 = 'http://192.168.0.39:5000';
+final url = url0 + '/api/driver/';
+final url1 = url0 + '/api/notifications/';
 final register = url + "register";
 final login = url + 'login';
 final update = url + 'update/UpdateProfileData';
@@ -12,4 +12,6 @@ final sendcomplaint = url + 'complaint/sendComplaint';
 final getcomplaint = url + 'complaint/getComplaint';
 final deletecomplaint = url + 'complaint/deleteComplaint';
 final driverAttendance =
-    'http://192.168.97.161:5000/mobileApp/api/attendance/driverAttendanceHistory';
+    url0 + '/mobileApp/api/attendance/driverAttendanceHistory';
+final Punishment = url0 + '/mobileApp/api/punishment/punishments';
+final Payment = url0 + '/api/driver/payment/payments';
